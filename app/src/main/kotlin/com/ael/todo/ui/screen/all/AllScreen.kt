@@ -24,9 +24,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateSetOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -46,7 +47,7 @@ fun AllScreen(
     val tasks by viewModel.tasks.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val collapsedCategories = remember { mutableStateSetOf<String>() }
+    var collapsedCategories by remember { mutableStateOf(setOf<String>()) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.tab_all)) }) },
@@ -73,7 +74,6 @@ fun AllScreen(
             LazyColumn(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                 grouped.forEach { (category, taskList) ->
                     val catName = category?.name ?: "Personal"
-                    val catId = category?.id
                     val collapsed = catName in collapsedCategories
                     stickyHeader(key = "header_$catName") {
                         ListItem(
@@ -87,8 +87,10 @@ fun AllScreen(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
                             ),
                             modifier = Modifier.clickable {
-                                if (collapsed) collapsedCategories.remove(catName)
-                                else collapsedCategories.add(catName)
+                                collapsedCategories = if (collapsed)
+                                    collapsedCategories - catName
+                                else
+                                    collapsedCategories + catName
                             }
                         )
                     }

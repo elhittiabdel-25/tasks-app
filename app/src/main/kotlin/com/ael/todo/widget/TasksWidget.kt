@@ -1,9 +1,9 @@
 package com.ael.todo.widget
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -12,23 +12,19 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.ActionCallback
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
-import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
-import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
@@ -36,7 +32,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.ael.todo.data.db.AppDatabase
-import com.ael.todo.data.repository.TaskRepository
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -112,9 +107,6 @@ class TasksWidget : GlanceAppWidget() {
         val PREF_COUNT = intPreferencesKey("widget_task_count")
         const val MAX_WIDGET_TASKS = 10
 
-        // Extension to convert dp-like values - Glance uses its own unit
-        private val Int.dp get() = androidx.glance.unit.Dp(this.toFloat())
-
         suspend fun updateData(context: Context) {
             val cal = Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
@@ -129,9 +121,7 @@ class TasksWidget : GlanceAppWidget() {
             val manager = androidx.glance.appwidget.GlanceAppWidgetManager(context)
             val ids = manager.getGlanceIds(TasksWidget::class.java)
             ids.forEach { glanceId ->
-                androidx.glance.appwidget.updateAppWidgetState(
-                    context, PreferencesGlanceStateDefinition, glanceId
-                ) { prefs ->
+                updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
                     prefs.toMutablePreferences().apply {
                         this[PREF_COUNT] = tasks.size
                         tasks.take(MAX_WIDGET_TASKS).forEachIndexed { i, t ->
